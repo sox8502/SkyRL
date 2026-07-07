@@ -2,12 +2,12 @@ set -x
 
 # Colocated GRPO training+generation for Qwen3-1.7B-Base on GSM8K.
 # Mirrors examples/train/gsm8k/run_gsm8k.sh (the known-good colocated config),
-# changing only: model -> Qwen3-1.7B-Base, single-GPU (NUM_GPUS=1) to fit one
-# large HF GPU, console logging so metrics land in `orx logs`, and ephemeral
-# checkpoints (HF Jobs has no persistent volume).
+# changing only: model -> Qwen3-1.7B-Base, NUM_GPUS=4 (reference default, 4-GPU
+# colocation), console logging so metrics land in `orx logs`, and ephemeral
+# checkpoints (managed compute has no persistent volume).
 
 : "${DATA_DIR:="$HOME/data/gsm8k"}"
-: "${NUM_GPUS:=1}"
+: "${NUM_GPUS:=4}"
 : "${LOGGER:=console}"
 : "${INFERENCE_BACKEND:=vllm}"
 : "${MODEL:=Qwen/Qwen3-1.7B-Base}"
