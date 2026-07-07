@@ -12,6 +12,18 @@ set -x
 : "${INFERENCE_BACKEND:=vllm}"
 : "${MODEL:=Qwen/Qwen3-1.7B-Base}"
 
+# DEBUG: surface the real vLLM EngineCore init error.
+# The failure "Engine core initialization failed. See root cause above" is raised
+# from the parent (wait_for_engine_startup); the actual traceback lives in the
+# EngineCore *child* process, whose stderr never reaches the leader log. Running
+# the engine in-process (multiprocessing=0) makes that traceback print inline,
+# and DEBUG logging surfaces vLLM's own init diagnostics. Exported (not passed on
+# the command line) so SkyRL propagates them into the Ray runtime env.
+export VLLM_USE_V1=1
+export VLLM_ENABLE_V1_MULTIPROCESSING=0
+export VLLM_LOGGING_LEVEL=DEBUG
+export RAY_DEDUP_LOGS=0
+
 # The HF Jobs base image does not ship `uv`; install it and put it on PATH.
 export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
 if ! command -v uv >/dev/null 2>&1; then
