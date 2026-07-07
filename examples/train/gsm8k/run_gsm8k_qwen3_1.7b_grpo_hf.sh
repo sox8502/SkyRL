@@ -31,6 +31,10 @@ fi
 # Console logging so metrics land in `orx logs` (stock default is wandb).
 export LOGGER=console
 
+# DEBUG fix C: force FlashAttention backend so vLLM skips the flashinfer JIT
+# cubin compile during EngineCore init (a common init-crash source).
+export VLLM_ATTENTION_BACKEND=FLASH_ATTN
+
 # Run the stock script untouched. It forwards "$@", so override only the
 # checkpoint path (stock writes under $HOME; keep it ephemeral) via a trailing
 # CLI arg — the script body itself is unchanged.
