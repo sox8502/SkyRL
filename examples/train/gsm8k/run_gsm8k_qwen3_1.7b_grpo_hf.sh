@@ -1,5 +1,25 @@
 set -x
 
+# --- Fix vLLM V1 EngineCore silent death (SIGBUS from a tiny /dev/shm) ---
+# vLLM V1 runs EngineCore as an mp child and mmaps a multi-hundred-MB ring
+# buffer into /dev/shm. HF Jobs containers default /dev/shm to ~64MB, so the
+# mmap faults with SIGBUS and the child is killed before it prints anything —
+# the exact signature we saw: child goes silent at the shm handshake, parent
+# reports "Engine core initialization failed ... Failed core proc(s): {}".
+# Enlarge /dev/shm (loud, so the log shows the before/after) before any Python.
+echo "=== /dev/shm before ==="; df -h /dev/shm || true
+if mount -o remount,size=16g /dev/shm 2>/dev/null; then
+    echo "remounted /dev/shm to 16g"
+else
+    echo "in-place remount of /dev/shm denied; falling back to a tmpfs under /tmp"
+    export VLLM_SHM_DIR=/tmp/vllm_shm
+    mkdir -p "$VLLM_SHM_DIR"
+    # If we can mount a fresh tmpfs there, do so; otherwise /tmp is usually a
+    # large tmpfs already and vLLM honoring TMPDIR still helps.
+    mount -t tmpfs -o size=16g tmpfs "$VLLM_SHM_DIR" 2>/dev/null || true
+fi
+echo "=== /dev/shm after ==="; df -h /dev/shm || true
+
 # Colocated GRPO training+generation for Qwen3-1.7B-Base on GSM8K.
 # Mirrors examples/train/gsm8k/run_gsm8k.sh (the known-good colocated config),
 # changing only: model -> Qwen3-1.7B-Base, single-GPU (NUM_GPUS=1) to fit one
