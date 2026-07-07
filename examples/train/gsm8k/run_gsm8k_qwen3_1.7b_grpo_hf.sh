@@ -1,21 +1,16 @@
 set -x
 
 # Colocated GRPO training+generation for Qwen3-1.7B-Base on GSM8K.
-# Self-contained for the orx `hf` backend: preps the dataset, logs to console
-# so metrics land in `orx logs`, and avoids persistent checkpoints (HF Jobs
-# has no persistent volume).
+# Mirrors examples/train/gsm8k/run_gsm8k.sh (the known-good colocated config),
+# changing only: model -> Qwen3-1.7B-Base, single-GPU (NUM_GPUS=1) to fit one
+# large HF GPU, console logging so metrics land in `orx logs`, and ephemeral
+# checkpoints (HF Jobs has no persistent volume).
 
 : "${DATA_DIR:="$HOME/data/gsm8k"}"
-: "${NUM_GPUS:=4}"
+: "${NUM_GPUS:=1}"
 : "${LOGGER:=console}"
 : "${INFERENCE_BACKEND:=vllm}"
 : "${MODEL:=Qwen/Qwen3-1.7B-Base}"
-
-# Surface the real vLLM EngineCore error: stop Ray from deduplicating per-worker
-# stderr, and make vLLM log at DEBUG so the child process's traceback reaches
-# stdout instead of the swallowed "See root cause above" wrapper.
-export RAY_DEDUP_LOGS=0
-export VLLM_LOGGING_LEVEL=DEBUG
 
 # The HF Jobs base image does not ship `uv`; install it and put it on PATH.
 export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
@@ -57,8 +52,8 @@ uv run --isolated --extra fsdp -m skyrl.train.entrypoints.main_base \
   trainer.update_epochs_per_batch=1 \
   trainer.train_batch_size=1024 \
   trainer.policy_mini_batch_size=256 \
-  trainer.micro_forward_batch_size_per_gpu=32 \
-  trainer.micro_train_batch_size_per_gpu=32 \
+  trainer.micro_forward_batch_size_per_gpu=64 \
+  trainer.micro_train_batch_size_per_gpu=64 \
   trainer.ckpt_interval=100000 \
   trainer.hf_save_interval=100000 \
   trainer.max_prompt_length=512 \
@@ -71,8 +66,7 @@ uv run --isolated --extra fsdp -m skyrl.train.entrypoints.main_base \
   generator.batched=true \
   environment.env_class=gsm8k \
   generator.n_samples_per_prompt=5 \
-  generator.inference_engine.gpu_memory_utilization=0.7 \
-  generator.inference_engine.engine_init_kwargs.max_model_len=2048 \
+  generator.inference_engine.gpu_memory_utilization=0.8 \
   trainer.logger="$LOGGER" \
   trainer.project_name="gsm8k" \
   trainer.run_name="gsm8k_qwen3_1.7b_grpo" \
