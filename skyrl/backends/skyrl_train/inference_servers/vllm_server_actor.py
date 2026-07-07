@@ -478,9 +478,17 @@ async def _build_and_serve_vllm_server(
         logger.info("Enabling RayPrometheusStatLogger for vLLM engine metrics")
         stat_loggers = [RayPrometheusStatLogger]
 
+    # DEBUG fix E: force the vLLM V1 EngineCore to run IN-PROCESS instead of as
+    # an mp child, so its init traceback prints to this (captured) log rather
+    # than to the child's own stderr. OPENAI_API_SERVER forces multiprocessing;
+    # LLM_CLASS lets VLLM_ENABLE_V1_MULTIPROCESSING=0 (set below) take effect.
+    import os as _os
+
+    _os.environ["VLLM_ENABLE_V1_MULTIPROCESSING"] = "0"
+    logger.info("[debug-fix-E] Forcing in-process EngineCore (usage_context=LLM_CLASS, mp disabled)")
     engine = AsyncLLMEngine.from_engine_args(
         engine_args=engine_args,
-        usage_context=UsageContext.OPENAI_API_SERVER,
+        usage_context=UsageContext.LLM_CLASS,
         stat_loggers=stat_loggers,
     )
     logger.info(f"Engine initialized on {cli_args.host}:{cli_args.port}, adding custom endpoints...")
