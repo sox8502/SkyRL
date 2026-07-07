@@ -65,7 +65,9 @@ uv run --isolated --extra fsdp -m skyrl.train.entrypoints.main_base \
   generator.batched=true \
   environment.env_class=gsm8k \
   generator.n_samples_per_prompt=5 \
-  generator.inference_engine.gpu_memory_utilization=0.8 \
+  generator.inference_engine.gpu_memory_utilization=0.7 \
+  generator.inference_engine.enforce_eager=true \
+  generator.inference_engine.engine_init_kwargs.max_model_len=2048 \
   trainer.logger="$LOGGER" \
   trainer.project_name="gsm8k" \
   trainer.run_name="gsm8k_qwen3_1.7b_grpo" \
