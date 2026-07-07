@@ -35,4 +35,5 @@ export LOGGER=console
 # checkpoint path (stock writes under $HOME; keep it ephemeral) via a trailing
 # CLI arg — the script body itself is unchanged.
 bash examples/train/gsm8k/run_gsm8k.sh \
-  trainer.ckpt_path="/tmp/skyrl-ckpts/gsm8k_1.5B_ckpt"
+  trainer.ckpt_path="/tmp/skyrl-ckpts/gsm8k_1.5B_ckpt" \
+  generator.inference_engine.enforce_eager=true
