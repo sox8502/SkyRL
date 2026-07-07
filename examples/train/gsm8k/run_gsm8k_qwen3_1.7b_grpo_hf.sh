@@ -31,6 +31,9 @@ fi
 # Console logging so metrics land in `orx logs` (stock default is wandb).
 export LOGGER=console
 
+# DEBUG fix B: force vLLM V0 engine — avoids the V1 mp EngineCore entirely.
+export VLLM_USE_V1=0
+
 # Run the stock script untouched. It forwards "$@", so override only the
 # checkpoint path (stock writes under $HOME; keep it ephemeral) via a trailing
 # CLI arg — the script body itself is unchanged.
