@@ -11,6 +11,21 @@ set -x
 : "${INFERENCE_BACKEND:=vllm}"
 : "${MODEL:=Qwen/Qwen3-1.7B-Base}"
 
+# The HF Jobs base image does not ship `uv`; install it and put it on PATH.
+export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
+if ! command -v uv >/dev/null 2>&1; then
+    echo "uv not found — installing..."
+    if command -v curl >/dev/null 2>&1; then
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+    elif command -v wget >/dev/null 2>&1; then
+        wget -qO- https://astral.sh/uv/install.sh | sh
+    else
+        pip install --no-cache-dir uv || python -m pip install --no-cache-dir uv
+    fi
+    export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
+fi
+uv --version
+
 # Prep GSM8K parquets if missing.
 if [[ ! -f "${DATA_DIR}/train.parquet" || ! -f "${DATA_DIR}/validation.parquet" ]]; then
     echo "GSM8K parquets not found in ${DATA_DIR} — running prep script..."
