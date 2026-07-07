@@ -11,6 +11,12 @@ set -x
 : "${INFERENCE_BACKEND:=vllm}"
 : "${MODEL:=Qwen/Qwen3-1.7B-Base}"
 
+# Surface the real vLLM EngineCore error: stop Ray from deduplicating per-worker
+# stderr, and make vLLM log at DEBUG so the child process's traceback reaches
+# stdout instead of the swallowed "See root cause above" wrapper.
+export RAY_DEDUP_LOGS=0
+export VLLM_LOGGING_LEVEL=DEBUG
+
 # The HF Jobs base image does not ship `uv`; install it and put it on PATH.
 export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
 if ! command -v uv >/dev/null 2>&1; then
