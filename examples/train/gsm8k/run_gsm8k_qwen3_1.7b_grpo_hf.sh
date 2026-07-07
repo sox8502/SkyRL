@@ -31,6 +31,10 @@ fi
 # Console logging so metrics land in `orx logs` (stock default is wandb).
 export LOGGER=console
 
+# DEBUG fix D: single GPU / single engine — isolates whether the crash is in
+# multi-engine colocated init. run_gsm8k.sh reads NUM_GPUS for engines+placement.
+export NUM_GPUS=1
+
 # Run the stock script untouched. It forwards "$@", so override only the
 # checkpoint path (stock writes under $HOME; keep it ephemeral) via a trailing
 # CLI arg — the script body itself is unchanged.
